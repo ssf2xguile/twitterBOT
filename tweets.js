@@ -64,19 +64,19 @@ function tweets(e) {
   if (tagValue != "") {
     tags = decorateTag(tagValue);
   }
-  const url = workSheet.getRange(postRow, 3).getValue();
-  if (word == "" && tagValue == "" && url == "") {
+  //const url = workSheet.getRange(postRow, 3).getValue();
+  if (word == "" && tagValue == "") {
     console.log("ツイートする内容がありません");
     return;
   }
-  const tweet = word + "\n" + tags + "\n" + url
+  const tweet = word + "\n" + tags
 
-  // const imageUrl = workSheet.getRange(postRow, 4).getValue();
-  const imageUrl = "";
+  const imageUrl = workSheet.getRange(postRow, 3).getValue();
+  // const imageUrl = "";
   if (imageUrl == "") {
     postTweet(tweet);
   } else {
-    postTweetWithImage(tweet);
+    postTweetWithImage(tweet, imageUrl);
   }
   // トリガー実行の場合、実行済のトリガーを削除する
   if (e != undefined && triggerType != 'definedDate') {
@@ -164,7 +164,7 @@ function postTweet(tweet) {
 /**
  * ツイートを画像付きで投稿する
  * */
-function postTweetWithImage(tweet) {
+function postTweetWithImage(tweet, imageUrl) {
   const targetFolder = findOrCreateFolder("images");
   const imageFile = downloadImageToDrive(imageUrl, targetFolder);
   const fileId = imageFile.getId();
@@ -184,10 +184,17 @@ function postTweetWithImage(tweet) {
   const mediaId = uploadResult.media_id_string;
 
   // アップロードしたファイルを添付して投稿
-  const postUrl = 'https://api.twitter.com/1.1/statuses/update.json'
+  const postUrl = "https://api.twitter.com/2/tweets";
+  const payload = {
+    "text": tweet,
+    "media": {
+      media_ids: [mediaId] // カンマ区切りで書く
+    }
+  };
   const postParam = {
-    status: tweet, // 画像と一緒に投稿する文章
-    media_ids: mediaId // カンマ区切りで書く
+    method: 'post',
+    'contentType': 'application/json',
+    'payload': JSON.stringify(payload)
   }
 
   const postResult = makeRequest(postUrl, postParam);
@@ -274,15 +281,19 @@ function createTriggers() {
 }
 
 /**
- * トリガーを一括削除する
+ * トリガーを一括削除し、スプレッドシートからも削除する
  * */
 function deleteAllTriggers() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const workSheet = ss.getSheetByName("tweets");
   const allTriggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < allTriggers.length; i++) {
     ScriptApp.deleteTrigger(allTriggers[i]);
     console.log("トリガーを削除しました。トリガーID：" + allTriggers[i]);
+    workSheet.getRange(baseRow+i, 6, 1,1).clearContent();
   }
 }
+
 /**
  * トリガーを削除する
  * */
