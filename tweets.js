@@ -14,9 +14,9 @@ function tweets(e) {
     // ボタン実行の場合
     // トリガーIDが空白、日時が空白の行番号を取得する
     for (let i = 0; i < workSheet.getLastRow() - baseRow + 1; i++) {
-      const date = workSheet.getRange(i + baseRow, 4).getValue();
-      const time = workSheet.getRange(i + baseRow, 5).getValue();
-      const triggerId = workSheet.getRange(i + baseRow, 6).getValue();
+      const date = workSheet.getRange(i + baseRow, 5).getValue();
+      const time = workSheet.getRange(i + baseRow, 6).getValue();
+      const triggerId = workSheet.getRange(i + baseRow, 7).getValue();
       if (date == "" && time == "" && triggerId == "") {
         postRow = i + baseRow;
         break
@@ -31,7 +31,7 @@ function tweets(e) {
     // トリガー自動実行の場合
     // トリガーIDが一致する行番号を取得する
     for (let i = 0; i < workSheet.getLastRow() - baseRow + 1; i++) {
-      const triggerId = workSheet.getRange(i + baseRow, 6).getValue();
+      const triggerId = workSheet.getRange(i + baseRow, 7).getValue();
       if (triggerId == e.triggerUid) {
         postRow = i + baseRow;
         break
@@ -41,9 +41,9 @@ function tweets(e) {
       console.log("トリガーIDに一致する行番号が存在しません。");
       // トリガーIDが空白、日時が空白の行番号を取得する
       for (let i = 0; i < workSheet.getLastRow() - baseRow + 1; i++) {
-        const date = workSheet.getRange(i + baseRow, 4).getValue();
-        const time = workSheet.getRange(i + baseRow, 5).getValue();
-        const triggerId = workSheet.getRange(i + baseRow, 6).getValue();
+        const date = workSheet.getRange(i + baseRow, 5).getValue();
+        const time = workSheet.getRange(i + baseRow, 6).getValue();
+        const triggerId = workSheet.getRange(i + baseRow, 7).getValue();
         if (date == "" && time == "" && triggerId == "") {
           postRow = i + baseRow;
           break
@@ -64,14 +64,14 @@ function tweets(e) {
   if (tagValue != "") {
     tags = decorateTag(tagValue);
   }
-  //const url = workSheet.getRange(postRow, 3).getValue();
-  if (word == "" && tagValue == "") {
+  const url = workSheet.getRange(postRow, 3).getValue();
+  if (word == "" && tagValue == "" && url == "") {
     console.log("ツイートする内容がありません");
     return;
   }
-  const tweet = word + "\n" + tags
+  const tweet = word + "\n" + tags + "\n" + url
 
-  const imageUrl = workSheet.getRange(postRow, 3).getValue();
+  const imageUrl = workSheet.getRange(postRow, 4).getValue();
   // const imageUrl = "";
   if (imageUrl == "") {
     postTweet(tweet);
@@ -95,7 +95,7 @@ function tweets(e) {
   }
   console.log("not_null_count：" + not_null_count);
   // ツイート済みを最後の次の行にコピーする
-  workSheet.getRange(postRow, 1, 1, 3).copyTo(workSheet.getRange(baseRow + not_null_count, 1, 1, 3));
+  workSheet.getRange(postRow, 1, 1, 4).copyTo(workSheet.getRange(baseRow + not_null_count, 1, 1, 4));
   // ツイート済みを削除
   workSheet.deleteRow(postRow);
   // 空白行を1行追加
@@ -128,7 +128,7 @@ function settingPostDate(){
   for (let i = 0; i < days; i++) {
     const date = new Date(tomorrow.getTime() + (i * 24 * 60 * 60 * 1000));
     const formattedDate = Utilities.formatDate(date, "JST", dateFormat);
-    workSheet.getRange(baseRow + i, 4, 1, 2).setValues([[formattedDate, "21:00"]]);
+    workSheet.getRange(baseRow + i, 5, 1, 2).setValues([[formattedDate, "21:00"]]);
   }
   //console.log(dateArray);
 
@@ -255,13 +255,13 @@ function createTriggers() {
 
   // 予約日付と時間が埋まっている箇所のトリガーを設定する
   for (let i = 0; i < workSheet.getLastRow() - baseRow + 1; i++) {
-    const previousTriggered = workSheet.getRange(i + baseRow, 6).getValue()
+    const previousTriggered = workSheet.getRange(i + baseRow, 7).getValue()
     if (previousTriggered != "") {
       // トリガーID列が空白でない場合（すでにトリガーが設定されている場合）
       continue;
     }
-    const date = workSheet.getRange(i + baseRow, 4).getValue();
-    let time = workSheet.getRange(i + baseRow, 5).getDisplayValue();
+    const date = workSheet.getRange(i + baseRow, 5).getValue();
+    let time = workSheet.getRange(i + baseRow, 6).getDisplayValue();
     if (date != "") {
       if (time == "") {
         time = "00:00"
@@ -274,14 +274,14 @@ function createTriggers() {
       // 特定日時でトリガー登録
       const trigger = ScriptApp.newTrigger('tweets').timeBased().at(date).create();
       const triggerId = trigger.getUniqueId();
-      workSheet.getRange(i + baseRow, 6).setValue(triggerId);
+      workSheet.getRange(i + baseRow, 7).setValue(triggerId);
       console.log("トリガーを設定しました。トリガーID：" + triggerId + "\n" + date);
     }
   }
 }
 
 /**
- * トリガーを一括削除し、スプレッドシートからも削除する
+ * トリガーを含む予約設定を一括削除し、スプレッドシートからも削除する
  * */
 function deleteAllTriggers() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -290,7 +290,7 @@ function deleteAllTriggers() {
   for (let i = 0; i < allTriggers.length; i++) {
     ScriptApp.deleteTrigger(allTriggers[i]);
     console.log("トリガーを削除しました。トリガーID：" + allTriggers[i]);
-    workSheet.getRange(baseRow+i, 6, 1,1).clearContent();
+    workSheet.getRange(baseRow+i, 5, 1,3).clearContent();
   }
 }
 
