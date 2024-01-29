@@ -252,9 +252,10 @@ function findOrCreateFolder(folderName, parentFolderId = undefined) {
 function createTriggers() {
   //セルを取得
   const workSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-
+  const max_reservation = 20; // 予約できる件数は20件まで
   // 予約日付と時間が埋まっている箇所のトリガーを設定する
-  for (let i = 0; i < workSheet.getLastRow() - baseRow + 1; i++) {
+  let i = 0;
+  while(i != workSheet.getLastRow() - baseRow + 1 || i != max_reservation) {
     const previousTriggered = workSheet.getRange(i + baseRow, 7).getValue()
     if (previousTriggered != "") {
       // トリガーID列が空白でない場合（すでにトリガーが設定されている場合）
@@ -277,6 +278,7 @@ function createTriggers() {
       workSheet.getRange(i + baseRow, 7).setValue(triggerId);
       console.log("トリガーを設定しました。トリガーID：" + triggerId + "\n" + date);
     }
+    i++;
   }
 }
 
