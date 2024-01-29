@@ -104,6 +104,7 @@ function tweets(e) {
 
 /**
  * 投稿する明日以降の日付と時刻を設定する
+ * 現在の設定では、1日に2ツイートする
  * */
 function settingPostDate(){
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -121,14 +122,16 @@ function settingPostDate(){
   }
 
   const days = not_null_count; // N日後
-  const today = new Date();
-  const tomorrow = new Date(today.getTime() + (24 * 60 * 60 * 1000));
+  const today = new Date(); // 今日の日付
+  const tomorrow = new Date(today.getTime() + (24 * 60 * 60 * 1000)); // 明日の日付
   const dateFormat = "yyyy-MM-dd";
 
-  for (let i = 0; i < days; i++) {
+
+  for (let i = 0; i*2+1 < days; i++) {
     const date = new Date(tomorrow.getTime() + (i * 24 * 60 * 60 * 1000));
     const formattedDate = Utilities.formatDate(date, "JST", dateFormat);
-    workSheet.getRange(baseRow + i, 5, 1, 2).setValues([[formattedDate, "21:00"]]);
+    workSheet.getRange(baseRow + i*2, 5, 1, 2).setValues([[formattedDate, "12:00"]]);
+    workSheet.getRange(baseRow + i*2+1, 5, 1, 2).setValues([[formattedDate, "20:00"]]);
   }
   //console.log(dateArray);
 
